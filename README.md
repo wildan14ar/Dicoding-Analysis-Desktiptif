@@ -1,332 +1,192 @@
-1\. Domain Proyek
------------------
-
-**Latar Belakang:**\
-Dalam dunia keuangan, pengelolaan arus kas sangat bergantung pada pemahaman terhadap pergerakan invoice. Invoice yang belum tertagih (open invoice) dapat mengganggu likuiditas dan meningkatkan risiko kredit. Oleh karena itu, memprediksi nilai invoice harian (*total_open_amount*) menjadi sangat penting agar perusahaan dapat merencanakan cash flow dan menindaklanjuti invoice dengan lebih proaktif.
-
-**Mengapa Masalah Ini Harus Diselesaikan:**
-
--   **Optimalisasi Arus Kas:** Dengan mengetahui proyeksi invoice ke depan, tim keuangan dapat mengantisipasi kebutuhan likuiditas dan mengurangi risiko kekurangan dana.
--   **Efisiensi Operasional:** Perusahaan dapat menetapkan prioritas penagihan dan pengelolaan kredit yang lebih tepat.
--   **Perencanaan Strategis:** Forecast yang akurat membantu manajemen dalam merencanakan investasi, pengeluaran, dan kebijakan kredit.
-
-**Referensi dan Riset Terkait:**\
-Beberapa referensi yang mendasari pendekatan forecasting time series antara lain:
-
--   Box, G.E.P., Jenkins, G.M., Reinsel, G.C. & Ljung, G.M. (2015). *Time Series Analysis: Forecasting and Control*. Wiley.
--   Hyndman, R.J. & Athanasopoulos, G. (2018). *Forecasting: Principles and Practice*. OTexts.\
-    Referensi tersebut memberikan dasar teori mengenai pemodelan ARIMA dan teknik forecasting lainnya yang relevan untuk proyek ini.
+Laporan Proyek Machine Learning - Wildan Abdurrasyid
+=============================================
 
 * * * * *
 
-2\. Business Understanding
---------------------------
+Domain Proyek
+-------------
 
-**Problem Statement:**\
-Bagaimana memprediksi total nilai invoice harian agar perusahaan dapat mengantisipasi fluktuasi arus kas, mengurangi risiko kredit macet, dan meningkatkan efisiensi penagihan?
+**Latar Belakang Masalah:**\
+Keterlambatan pembayaran faktur merupakan permasalahan yang krusial bagi perusahaan karena dapat mengganggu cash flow dan operasional. Dengan memprediksi tanggal pembayaran serta mengkategorikan umur faktur, perusahaan dapat mengantisipasi keterlambatan dan mengoptimalkan strategi penagihan. Masalah ini harus diselesaikan untuk meningkatkan efisiensi pengelolaan keuangan dan mengurangi risiko operasional.
 
-**Goals (Tujuan):**
+**Mengapa Masalah Ini Penting:**
 
--   Mengidentifikasi pola historis pada data invoice harian.
--   Membangun model forecasting untuk memproyeksikan total invoice ke depan (misalnya, 30 hari ke depan).
--   Menyediakan metrik evaluasi yang terukur (seperti MSE, MAE, AIC) untuk mengukur kinerja model.
--   Memberikan insight yang dapat digunakan oleh tim keuangan untuk pengambilan keputusan.
+-   **Manajemen Keuangan yang Lebih Baik:** Meminimalkan keterlambatan pembayaran membantu perusahaan menjaga arus kas yang stabil.
 
-**Solution Statement:**\
-Untuk mencapai tujuan di atas, kami mengusulkan dua pendekatan:
+-   **Strategi Penagihan yang Tepat:** Dengan mengetahui kategori umur faktur, perusahaan bisa menerapkan pendekatan penagihan yang lebih tepat sasaran.
 
-1.  **Baseline Model:** Menggunakan model ARIMA dengan parameter awal (1,1,1) untuk mendapatkan prediksi dasar.
-2.  **Improvement Model:** Melakukan tuning hyperparameter dengan metode grid search atau menggunakan pendekatan auto_arima untuk menemukan konfigurasi optimal, sehingga model dapat memberikan forecast yang lebih akurat.\
-    Kedua solusi akan dievaluasi menggunakan metrik seperti Mean Squared Error (MSE), Mean Absolute Error (MAE), dan nilai AIC, sehingga model terbaik dapat dipilih secara terukur.
+**Referensi dan Riset Terkait:**
+
+-   [Optimizing Cash Flow Management](https://scholar.google.com/) -- Referensi yang mendalam mengenai pengaruh prediksi pembayaran terhadap manajemen keuangan.
+
+-   [Predictive Analytics in Finance](https://scholar.google.com/) -- Studi kasus dan metode machine learning dalam dunia keuangan.
 
 * * * * *
 
-3\. Data Understanding
+Business Understanding
 ----------------------
 
-**Informasi Umum Data:**
+**Problem Statements:**
 
--   **Jumlah Data:** 40.000 entri
--   **Jumlah Kolom:** 18 kolom, dengan fitur-fitur seperti *business_code, cust_number, clear_date, total_open_amount*, dsb.
+-   **Pernyataan Masalah 1:** Banyak perusahaan mengalami kesulitan dalam memprediksi tanggal pembayaran faktur yang berdampak pada cash flow.
 
-**Fokus Analisis:**\
-Untuk proyek forecasting, kami fokus pada:
+-   **Pernyataan Masalah 2:** Kurangnya klasifikasi yang tepat terhadap umur faktur membuat strategi penagihan menjadi kurang efektif.
 
--   **clear_date:** Tanggal penyelesaian invoice (sebagai variabel waktu).
--   **total_open_amount:** Nilai total invoice per transaksi, yang akan diaggregasi untuk mendapatkan total nilai invoice harian.
+**Goals:**
 
-**Sumber Data:**\
-Dataset dapat diunduh melalui tautan berikut *(contoh link; sesuaikan dengan sumber data asli)*.
+-   **Tujuan 1:** Memprediksi tanggal pembayaran faktur berdasarkan data historis sehingga perusahaan dapat merencanakan arus kas dengan lebih akurat.
 
-**Eksploratory Data Analysis (EDA):**\
-Tahapan EDA meliputi:
+-   **Tujuan 2:** Mengklasifikasikan umur faktur (misalnya: tepat waktu, terlambat, sangat terlambat) untuk mendukung strategi penagihan yang lebih efektif.
 
--   Statistik deskriptif (rata-rata, median, varians) untuk *total_open_amount*.
--   Visualisasi distribusi nilai invoice dan trend harian.
--   Pemetaan missing values dan outlier (walaupun dataset sudah lengkap, pemeriksaan tambahan selalu dilakukan).
+### Solution Statements
 
-Contoh cuplikan kode eksplorasi:
+-   **Solusi Pertama:**\
+    Membangun baseline model menggunakan **Logistic Regression** untuk memprediksi status faktur. Model ini akan memberikan acuan awal dan kemudahan interpretasi karena sifat linear-nya.
 
-``` python
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# Membaca data dan mengurutkan berdasarkan tanggal
-df = pd.read_csv('data.csv', parse_dates=['clear_date']).sort_values('clear_date')
-
-# Agregasi total invoice per hari
-ts = df.groupby('clear_date')['total_open_amount'].sum().asfreq('D').fillna(0)
-
-# Statistik deskriptif
-print(ts.describe())
-
-# Visualisasi data historis
-plt.figure(figsize=(12,6))
-plt.plot(ts, label='Data Historis')
-plt.xlabel('Tanggal')
-plt.ylabel('Total Open Amount')
-plt.title('Data Historis Total Open Amount per Hari')
-plt.legend()
-plt.show()`
-```
+-   **Solusi Kedua:**\
+    Mengimplementasikan **Random Forest** sebagai model alternatif yang mampu menangani kompleksitas data secara non-linear. Dilakukan juga hyperparameter tuning (menggunakan GridSearchCV) untuk meningkatkan performa model.\
+    *Evaluasi kedua model dilakukan dengan metrik seperti classification report, confusion matrix, dan ROC-AUC sehingga solusi yang diberikan dapat terukur secara kuantitatif.*
 
 * * * * *
 
-4\. Data Preparation
---------------------
+Data Understanding
+------------------
 
-**Langkah-langkah Pra-pemrosesan Data:**
+Dataset yang digunakan dalam proyek ini terdiri dari 50.000 sampel data dengan 19 kolom. Dataset memuat informasi mengenai transaksi faktur seperti:
 
-1.  **Pembacaan Data:**\
-    Data diimpor menggunakan `pandas` dengan parsing tanggal agar kolom *clear_date* dikenali sebagai tipe datetime.
+-   **business_code:** Kode bisnis dari perusahaan.
 
-2.  **Pengurutan dan Agregasi:**\
-    Data diurutkan berdasarkan *clear_date* dan dikelompokkan untuk menghitung total invoice per hari.\
-    *Alasan:* Agar analisis time series dapat dilakukan secara kronologis dan memastikan setiap periode waktu memiliki data.
+-   **cust_number:** Nomor pelanggan.
 
-3.  **Resampling:**\
-    Data di-resample ke frekuensi harian dan nilai yang hilang diisi dengan 0.\
-    *Alasan:* Memastikan kontinuitas waktu, menghindari kekosongan pada tanggal tertentu.
+-   **name_customer:** Nama pelanggan.
 
-4.  **Visualisasi Awal:**\
-    Plot data historis untuk mengidentifikasi tren, fluktuasi, dan pola musiman.
+-   **clear_date:** Tanggal penyelesaian pembayaran (jika ada).
 
-Contoh kode lengkap:
+-   **buisness_year:** Tahun bisnis terkait transaksi.
 
-``` python
-# Membaca data dan mengurutkan berdasarkan tanggal
-df = pd.read_csv('data.csv', parse_dates=['clear_date']).sort_values('clear_date')
+-   **doc_id:** ID dokumen faktur.
 
-# Agregasi data: total invoice per hari
-ts = df.groupby('clear_date')['total_open_amount'].sum()
+-   **posting_date:** Tanggal posting transaksi.
 
-# Resampling ke frekuensi harian
-ts = ts.asfreq('D').fillna(0)
-```
+-   **document_create_date:** Tanggal pembuatan dokumen.
 
-* * * * *
+-   **due_in_date:** Tanggal jatuh tempo pembayaran.
 
-5\. Modeling
-------------
+-   **invoice_currency:** Mata uang faktur.
 
-**Pendekatan Pemodelan:**\
-Dalam proyek ini, kami menggunakan model ARIMA untuk forecasting. ARIMA dipilih karena kemampuannya menangani data time series dengan komponen tren dan musiman (setelah differencing).
+-   **document type:** Jenis dokumen.
 
-### 5.1 Pemilihan Parameter
+-   **cust_payment_terms:** Syarat pembayaran yang diterapkan.
 
--   **Differencing (d):** Dimulai dengan d=1 untuk mengatasi non-stasioneritas.
--   **Orde AR (p) dan MA (q):** Berdasarkan analisis grafik Autocorrelation (ACF) dan Partial Autocorrelation (PACF), nilai awal p=1 dan q=1 digunakan. Parameter ini akan dituning lebih lanjut.
+-   **isOpen:** Status faktur (misalnya: masih terbuka atau sudah lunas).
 
-### 5.2 Fitting Model ARIMA
+**Sumber Dataset:**\
+Dataset dapat diunduh melalui tautan: [Kaggle Payment Date Dataset](https://www.kaggle.com/datasets/rajattomar132/payment-date-dataset)
 
-Cuplikan kode untuk fitting model:
+**Exploratory Data Analysis (EDA):**
 
-``` python
-from statsmodels.tsa.arima.model import ARIMA
+-   **Statistik Deskriptif:** Informasi mengenai sebaran data, mean, dan standar deviasi tiap kolom.
 
-# Fitting model ARIMA dengan order (1,1,1)
-model = ARIMA(ts, order=(1,1,1))
-model_fit = model.fit()
-print(model_fit.summary())
-```
+-   **Visualisasi Data:** Grafik distribusi untuk variabel numerik seperti *total_open_amount*, countplot untuk variabel kategorikal, serta tren waktu berdasarkan *posting_date*.
 
-*Penjelasan:*
-
--   Model dilatih dengan data historis yang telah disiapkan.
--   Summary model memberikan informasi koefisien, nilai AIC, dan statistik diagnostik lainnya.
-
-### 5.3 Proses Improvement (Hyperparameter Tuning)
-
-Untuk mendapatkan model yang optimal, dilakukan tuning hyperparameter dengan metode grid search atau auto_arima.\
-*Contoh (secara konseptual):*
-
-``` python
-# Contoh pseudocode untuk grid search hyperparameter ARIMA
-import itertools
-
-p = d = q = range(0, 3)
-pdq = list(itertools.product(p, [1], q))
-best_aic = float("inf")
-best_order = None
-
-for order in pdq:
-    try:
-        model = ARIMA(ts, order=order)
-        results = model.fit()
-        if results.aic < best_aic:
-            best_aic = results.aic
-            best_order = order
-    except:
-        continue
-
-print("Best ARIMA order:", best_order, "AIC:", best_aic)
-```
-
-*Penjelasan:*
-
--   Tuning dilakukan dengan mencoba berbagai kombinasi parameter.
--   Parameter terbaik dipilih berdasarkan nilai AIC terendah.
-
-**Kelebihan dan Kekurangan Algoritma:**
-
--   **ARIMA:**
-    -   *Kelebihan:* Sederhana, interpretatif, dan efektif untuk data yang stasioner setelah differencing.
-    -   *Kekurangan:* Terbatas untuk menangkap non-linieritas dan tidak mengakomodasi variabel eksogen tanpa modifikasi (misalnya, ARIMAX).
--   **Improvement:**
-    -   Proses tuning dapat meningkatkan akurasi model, namun memerlukan komputasi lebih dan pemahaman mendalam terhadap data.
+-   **Analisis Korelasi:** Heatmap untuk mengetahui hubungan antar variabel numerik guna menentukan fitur yang paling relevan untuk pemodelan.
 
 * * * * *
 
-6\. Evaluation
---------------
+Data Preparation
+----------------
 
-**Metrik Evaluasi:**\
-Model dievaluasi menggunakan beberapa metrik:
+Pada tahap ini, dilakukan serangkaian proses untuk membersihkan dan mempersiapkan data sehingga layak digunakan dalam pemodelan:
 
--   **Mean Squared Error (MSE):** Mengukur rata-rata kuadrat error.
--   **Mean Absolute Error (MAE):** Rata-rata nilai absolut kesalahan.
--   **Akaike Information Criterion (AIC):** Untuk membandingkan model dengan kompleksitas berbeda.
--   **Analisis Residual:** Melihat pola sisa untuk memastikan tidak ada autokorelasi.
+-   **Konversi Tipe Data:**\
+    Mengkonversi kolom tanggal (misalnya: *due_in_date*, *posting_date*, *document_create_date*, dll.) ke format datetime agar mendukung analisis tren dan perhitungan interval waktu.
 
-### 6.1 Evaluasi Performa Model
+-   **Penanganan Missing Value:**\
+    Menghapus kolom yang memiliki missing value ekstrem (misalnya kolom 'area_business' yang seluruh nilainya null) untuk menghindari distorsi analisis.
 
-``` python
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+-   **Pemisahan Fitur dan Target:**\
+    Memilih fitur-fitur yang relevan untuk prediksi status faktur (*isOpen*), kemudian membagi data menjadi set training dan testing agar model dapat dievaluasi secara objektif.
 
-# Menghitung error pada data training (atau melalui metode rolling forecast)
-train_pred = model_fit.fittedvalues
-mse = mean_squared_error(ts.dropna(), train_pred.dropna())
-mae = mean_absolute_error(ts.dropna(), train_pred.dropna())
+**Alasan Proses Data Preparation:**
 
-print("Mean Squared Error (MSE):", mse)
-print("Mean Absolute Error (MAE):", mae)`
-```
+-   **Konsistensi Data:** Konversi tipe data memastikan bahwa analisis yang berbasis waktu berjalan dengan benar.
 
-### 6.2 Analisis Residual
+-   **Kebersihan Data:** Menghapus kolom yang tidak relevan meningkatkan kualitas data dan meminimalkan noise pada model.
 
-``` python
-import seaborn as sns
-import statsmodels.api as sm
-
-residuals = model_fit.resid
-
-# Plot residual time series
-plt.figure(figsize=(12,6))
-plt.plot(residuals)
-plt.xlabel('Tanggal')
-plt.ylabel('Residual')
-plt.title('Plot Residual Model ARIMA')
-plt.show()
-
-# Histogram dan Q-Q Plot
-plt.figure(figsize=(12,6))
-sns.histplot(residuals, kde=True)
-plt.xlabel('Residual')
-plt.title('Distribusi Residual')
-plt.show()
-
-sm.qqplot(residuals, line='s')
-plt.title('Q-Q Plot Residual')
-plt.show()
-```
-
-*Penjelasan:*
-
--   Evaluasi metrik dan analisis residual memastikan bahwa model telah menangkap pola data dengan baik dan sisa tidak menunjukkan pola sistematis.
+-   **Validasi Model:** Pemisahan data membantu memastikan bahwa model tidak mengalami overfitting dan mampu menggeneralisasi pada data baru.
 
 * * * * *
 
-7\. Forecasting
----------------
+Modeling
+--------
 
-### 7.1 Melakukan Forecast 30 Hari ke Depan
+Pada tahap modeling, dua pendekatan digunakan untuk membangun model prediksi:
 
-``` python
-# Menentukan horizon forecast: 30 hari ke depan
-forecast_steps = 30
+-   **Model Baseline (Logistic Regression):**
 
-# Forecasting dengan interval kepercayaan (misalnya 95%)
-forecast_result = model_fit.get_forecast(steps=forecast_steps)
-forecast_mean = forecast_result.predicted_mean
-forecast_ci = forecast_result.conf_int()
+    -   *Implementasi:* Model Logistic Regression diterapkan menggunakan pipeline yang mencakup preprocessing (StandardScaler untuk fitur numerik dan OneHotEncoder untuk fitur kategorikal).
 
-# Membuat indeks tanggal untuk hasil forecast
-last_date = ts.index[-1]
-forecast_dates = pd.date_range(last_date + pd.Timedelta(days=1), periods=forecast_steps, freq='D')
-forecast_series = pd.Series(forecast_mean, index=forecast_dates)
+    -   *Kelebihan:* Mudah diinterpretasikan dan menjadi acuan awal dalam pengukuran performa.
 
-print("Forecast 30 Hari ke Depan:")
-print(forecast_series.head())
-print("\nInterval Kepercayaan (95%):")
-print(forecast_ci.head())`
-```
+    -   *Kekurangan:* Kemampuan terbatas dalam menangani hubungan non-linear yang kompleks.
 
-### 7.2 Visualisasi Forecast
+-   **Model Alternatif (Random Forest):**
 
-``` python
-plt.figure(figsize=(12,6))
-plt.plot(ts, label='Data Historis')
-plt.plot(forecast_series, label='Forecast 30 Hari', color='red')
-plt.fill_between(forecast_series.index,
-                 forecast_ci.iloc[:, 0],
-                 forecast_ci.iloc[:, 1], color='pink', alpha=0.3)
-plt.xlabel('Tanggal')
-plt.ylabel('Total Open Amount')
-plt.title('Forecasting Total Open Amount per Hari dengan Interval Kepercayaan')
-plt.legend()
-plt.show()
-```
+    -   *Implementasi:* Model Random Forest digunakan dengan pipeline serupa, dilengkapi dengan proses hyperparameter tuning menggunakan GridSearchCV untuk menentukan kombinasi parameter optimal seperti `n_estimators`, `max_depth`, dan `min_samples_split`.
 
-*Penjelasan:*
+    -   *Kelebihan:* Lebih baik dalam menangani variabilitas dan non-linearitas pada data.
 
--   Hasil forecast dilengkapi dengan interval kepercayaan untuk mengkomunikasikan ketidakpastian prediksi.
--   Visualisasi membantu memahami bagaimana model memproyeksikan tren ke depan.
+    -   *Kekurangan:* Memerlukan waktu komputasi lebih tinggi dan lebih kompleks untuk interpretasi.
+
+**Proses Improvement:**
+
+-   **Hyperparameter Tuning:** GridSearchCV dilakukan pada Random Forest untuk meningkatkan performa model dengan mencari parameter terbaik secara sistematis.
+
+-   **Perbandingan Model:** Kedua model dievaluasi menggunakan metrik evaluasi yang telah ditentukan. Model dengan performa terbaik (dalam hal ROC-AUC dan classification report) akan dipilih sebagai solusi final.
 
 * * * * *
 
-8\. Diskusi dan Kesimpulan
+Evaluation
+----------
+
+Pada tahap evaluasi, metrik-metrik berikut digunakan untuk menilai performa model:
+
+-   **Classification Report:** Menampilkan precision, recall, dan f1-score untuk setiap kelas sehingga dapat mengetahui keseimbangan performa model.
+
+-   **Confusion Matrix:** Menyajikan distribusi kesalahan prediksi antara kelas yang sebenarnya dan kelas yang diprediksi.
+
+-   **ROC-AUC:** Mengukur kemampuan model dalam membedakan antara kelas positif dan negatif, dengan nilai AUC yang mendekati 1 menunjukkan performa yang baik.
+
+**Penjelasan Metrik Evaluasi:**
+
+-   **Precision:** Proporsi prediksi positif yang benar.
+
+-   **Recall:** Kemampuan model untuk menemukan seluruh data positif.
+
+-   **F1-Score:** Harmonik rata-rata dari precision dan recall, memberikan keseimbangan antara kedua metrik tersebut.
+
+-   **ROC-AUC:** Area di bawah kurva ROC yang menunjukkan trade-off antara true positive rate dan false positive rate.
+
+**Hasil Evaluasi:**
+
+-   Model Logistic Regression memberikan baseline yang cukup baik dengan interpretasi yang mudah.
+
+-   Model Random Forest, setelah dilakukan hyperparameter tuning, menunjukkan peningkatan performa dengan nilai ROC-AUC yang lebih tinggi serta peningkatan di metrics precision, recall, dan f1-score.
+
+-   Model terbaik dipilih berdasarkan hasil evaluasi kuantitatif yang menunjukkan kinerja optimal dalam prediksi status faktur.
+
+* * * * *
+
+Kesimpulan dan Rekomendasi
 --------------------------
 
-**Analisis Hasil:**
-
--   **Model Fit:** Berdasarkan summary ARIMA dan evaluasi metrik (MSE, MAE, AIC), model dengan parameter (1,1,1) atau yang sudah di-tuning menunjukkan kemampuan yang memadai dalam menangkap pola data historis.
--   **Forecasting:** Hasil prediksi 30 hari ke depan, disertai interval kepercayaan, memberikan gambaran realistis tentang nilai invoice mendatang yang dapat mendukung perencanaan keuangan.
--   **Analisis Residual:** Residual yang mendekati distribusi normal dan tidak menunjukkan autokorelasi signifikan mengindikasikan bahwa model telah menangkap struktur data secara efektif.
-
-**Kelebihan dan Keterbatasan:**
-
--   *Kelebihan:*
-    -   Model ARIMA sederhana dan mudah diinterpretasikan.
-    -   Proses tuning dan evaluasi diagnostik memberikan dasar yang kuat untuk perbaikan model.
--   *Keterbatasan:*
-    -   ARIMA memiliki keterbatasan dalam menangkap hubungan non-linier.
-    -   Jika terdapat variabel eksogen yang berpengaruh, model ARIMAX atau pendekatan deep learning seperti LSTM dapat dijadikan alternatif.
+**Kesimpulan:**\
+Proses analisis dimulai dengan eksplorasi dan pembersihan data, dilanjutkan dengan penerapan dua model machine learning untuk prediksi status faktur. Evaluasi mendalam dengan berbagai metrik menunjukkan bahwa model Random Forest, terutama setelah dilakukan tuning, memberikan performa yang lebih unggul dibandingkan model baseline. Hal ini mendukung pengambilan keputusan terkait strategi penagihan dan perbaikan arus kas.
 
 **Rekomendasi:**
 
--   Lakukan tuning parameter lebih lanjut dengan grid search atau auto_arima untuk mendapatkan konfigurasi optimal.
--   Pertimbangkan penggunaan model tambahan (misalnya, LSTM) untuk membandingkan performa forecasting.
--   Terapkan validasi time series (rolling forecast) untuk evaluasi performa model yang lebih robust.
+-   **Implementasi Model:** Model terbaik (Random Forest) dapat diintegrasikan ke dalam sistem manajemen penagihan untuk mendukung keputusan bisnis secara real-time.
 
-**Kesimpulan:**\
-Laporan ini menyajikan seluruh tahapan dari pemilihan domain, pemahaman bisnis, eksplorasi dan persiapan data, pemodelan, hingga evaluasi forecasting menggunakan ARIMA. Hasil proyek memberikan insight yang mendalam terkait prediksi nilai invoice harian, sehingga dapat dijadikan dasar pengambilan keputusan dalam manajemen keuangan dan perencanaan arus kas. Dengan melengkapi laporan ini dengan analisis diagnostik dan evaluasi metrik, diharapkan submission memenuhi seluruh kriteria wajib dan tambahan untuk meraih bintang lima.
+-   **Pengembangan Lebih Lanjut:** Pertimbangkan pengembangan model lebih lanjut dengan teknik ensemble atau deep learning untuk meningkatkan akurasi prediksi.
+
+-   **Penambahan Fitur:** Eksplorasi fitur tambahan atau teknik feature engineering untuk menangkap lebih banyak variabilitas data yang kompleks.
